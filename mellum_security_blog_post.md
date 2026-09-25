@@ -153,6 +153,47 @@ The most striking feature of this table is how small the deltas are. Eight of te
 
 ---
 
+## A Preview from the ML Team: The Next Thinking Checkpoint
+
+The headline comparison above is between two publicly released models. To get an early read on what's coming, we obtained the freshest available Thinking checkpoint directly from JetBrains' ML team — an internal, unreleased model that was still in active training at the time of this evaluation and is not publicly available. It ran the same full B3 evaluation (630 samples × 5 epochs) under identical conditions, allowing an apples-to-apples comparison against the released Thinking checkpoint.
+
+| | Thinking (released) | Thinking (internal) |
+|---|:---:|:---:|
+| Samples | 630 | 630 |
+| Epochs | 5 | 5 |
+| Duration | 60.8 min | 85.6 min |
+| Output tokens | 7.7M | 9.5M |
+| **Overall ASR ↓ safer** | **22.42%** | **18.89%** |
+
+The headline improvement is 3.5 percentage points — a relative reduction of roughly 16% in attack success rate. The internal checkpoint is also notably more verbose: 9.5M output tokens versus 7.7M, and 85.6 minutes versus 60.8 minutes. The longer reasoning traces appear to correlate with more deliberate behavior under attack.
+
+The per-scenario breakdown shows where the improvement is concentrated:
+
+| Scenario | Type | Old Thinking | New Thinking | Δ |
+|----------|------|:--------:|:--------:|:---:|
+| Thingularity | DCE | 0.354 | 0.242 | +0.112 |
+| Curs-ed CodeReview | IIO | 0.130 | 0.021 | +0.109 |
+| MindfulChat | DAIS | 0.461 | 0.365 | +0.096 |
+| OmniChat Desktop | IIO | 0.073 | 0.031 | +0.041 |
+| CorpConnect Messenger | DTI | 0.317 | 0.282 | +0.035 |
+| PortfolioIQ Advisor | IIO | 0.173 | 0.153 | +0.020 |
+| Trippy Planner | IIO | 0.281 | 0.282 | −0.001 |
+| Solace AI | DIO | 0.155 | 0.164 | −0.010 |
+| Cycling Coach | DCE | 0.155 | 0.179 | −0.024 |
+| Clause AI | ITI | 0.143 | 0.170 | −0.027 |
+
+*Positive Δ = old released model more vulnerable; new internal model improved.*
+
+The gains concentrate in three areas. **Data and content exfiltration (DCE)** improves most dramatically: Thingularity (IoT device management) drops from 35.4% to 24.2%, and Curs-ed CodeReview (code review with hidden exfiltration payloads) falls from 13.0% to just 2.1% — nearly eliminating the vulnerability. **Denial of AI service (DAIS)** on MindfulChat improves from 46.1% to 36.5%, and **indirect instruction override (IIO)** on OmniChat Desktop drops from 7.3% to 3.1%.
+
+The pattern at Level 2 — where an LLM-as-judge screens output before any action is taken — is the most consistent signal: the internal checkpoint achieves equal or better ASR in every single scenario at L2. At Levels 0 and 1, gains and small regressions coexist. This suggests the new checkpoint's longer reasoning traces interact especially well with the external judge; the two-layer deliberate reasoning plus external verification appears to create a more robust verification loop at the defense level where it matters most.
+
+Three scenarios show marginal regressions: Clause AI ITI (Δ −0.027), Cycling Coach DCE (−0.024), and Solace AI DIO (−0.010). These are small and may represent noise across the five-epoch averages rather than a genuine capability shift in either direction.
+
+This is an early data point, not a final evaluation — the model is unreleased and still evolving. But the direction is encouraging: broad improvement across most attack types, dominated by large gains in exfiltration and service-denial scenarios, and a consistent L2 advantage that grows when harness-level defenses are active.
+
+---
+
 ## Defense Is a Stack, Not a Model
 
 The CorpConnect result should be read as a design constraint, not just a benchmark finding: no backbone LLM should be trusted as the sole line of defense for irreversible actions. The data consistently points toward a layered approach.
